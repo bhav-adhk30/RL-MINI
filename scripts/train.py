@@ -2,7 +2,7 @@ import argparse, csv, json, os, time
 
 import numpy as np
 
-from zsrl import get_device
+from zsrl import get_device, output_root
 from zsrl.dataset import MVTecDefects
 from zsrl.encoder import FrozenEncoder
 from zsrl.env import N_ACTIONS, ZoomSearchEnv
@@ -51,10 +51,14 @@ def main():
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--lam", type=float, default=0.1)
     p.add_argument("--eval-every", type=int, default=500)
+    p.add_argument("--skip-step8", action="store_true",
+                    help="skip the in-process Step 8 sweep after training")
     args = p.parse_args()
 
-    out = os.path.join("runs", args.agent, f"seed{args.seed}_lam{args.lam}")
+    root = output_root()
+    out = os.path.join(root, "runs", args.agent, f"seed{args.seed}_lam{args.lam}")
     os.makedirs(out, exist_ok=True)
+    print(f"output root: {root}  (writing to {out})")
 
     device = get_device()
     encoder = FrozenEncoder(device)
@@ -64,7 +68,8 @@ def main():
                              lam=args.lam, seed=1234)  # augment=False: never at eval
     agent = build_agent(args.agent, train_env.state_dim, device, args.seed)
 
-    f = open(os.path.join(out, "train_log.csv"), "w", newline="")
+    log_path = os.path.join(out, "train_log.csv")
+    f = open(log_path, "w", newline="")
     w = csv.writer(f)
     w.writerow(["episode", "return", "success", "steps", "final_depth",
                 "committed", "explore", "loss", "wall"])
@@ -110,12 +115,46 @@ def main():
                 best = rec
                 agent.save(os.path.join(out, "best.pt"))
 
-    agent.save(os.path.join(out, "final.pt"))
+    final_path = os.path.join(out, "final.pt")
+    agent.save(final_path)
     f.close()
-    with open(os.path.join(out, "meta.json"), "w") as g:
+    meta_path = os.path.join(out, "meta.json")
+    with open(meta_path, "w") as g:
         json.dump({"agent": args.agent, "seed": args.seed, "lam": args.lam,
                    "episodes": args.episodes, "best_recall": best,
                    "minutes": round((time.time() - start) / 60, 1)}, g, indent=2)
+
+    # Final weights, train-vs-test recall (the memorisation check) --
+    # always run, cheap relative to training.
+    train_env_eval = ZoomSearchEnv(MVTecDefects(split="train"), encoder, lam=args.lam)
+    train_recall, train_cost = evaluate(train_env_eval, agent, n=100)
+    test_recall, test_cost = evaluate(eval_env, agent, n=100)
+    print(f"\nfinal weights, train-vs-test: "
+          f"train recall {train_recall:.3f} cost {train_cost:.1f} "
+          f"(per-level accuracy {train_recall ** (1/3):.3f})  |  "
+          f"test recall {test_recall:.3f} cost {test_cost:.1f} "
+          f"(per-level accuracy {test_recall ** (1/3):.3f})")
+
+    written = [log_path, final_path, meta_path]
+    if os.path.exists(os.path.join(out, "best.pt")):
+        written.append(os.path.join(out, "best.pt"))
+
+    # Step 8 sweep, in-process on the current (final) in-memory agent --
+    # no save-then-reload round trip.
+    if not args.skip_step8:
+        from scripts.evaluate import run_full_evaluation
+        print("\n--- Step 8 evaluation (in-process, final weights) ---")
+        run_full_evaluation(agent, device, args.agent, args.seed, args.lam,
+                             n=200, out_dir=root)
+        eval_csv = os.path.join(root, "results",
+                                 f"eval_{args.agent}_seed{args.seed}_lam{args.lam}.csv")
+        if os.path.exists(eval_csv):
+            written.append(eval_csv)
+
+    print("\n--- files written ---")
+    for path in written:
+        size = os.path.getsize(path) if os.path.exists(path) else -1
+        print(f"  {path}  ({size} bytes)" if size >= 0 else f"  {path}  MISSING")
 
 
 if __name__ == "__main__":
