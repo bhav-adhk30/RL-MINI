@@ -1,0 +1,8 @@
+{
+  "agent": "ppo",
+  "seed": 4,
+  "lam": 0.1,
+  "episodes": 12000,
+  "best_recall": 0.19,
+  "minutes": 16.3
+}

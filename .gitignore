@@ -1,5 +1,6 @@
 data/
-runs/
+runs/*
+!runs/ppo
 __pycache__/
 *.pyc
 .venv/
