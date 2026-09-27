@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 
 import numpy as np
@@ -7,6 +8,7 @@ from PIL import Image
 from zsrl import CANVAS
 
 MVTEC_ROOT = os.environ.get("MVTEC_ROOT", "data/mvtec")
+DEMO_ROOT = os.environ.get("DEMO_ROOT", "data/demo")
 
 CATEGORIES = ("bottle", "cable", "capsule", "carpet", "grid",
               "hazelnut", "leather", "metal_nut", "pill", "screw",
@@ -83,3 +85,52 @@ class MVTecDefects:
     def categories(self):
         from collections import Counter
         return Counter(r["category"] for r in self.records)
+
+
+class DemoSet:
+    """A small, committed-to-git sample of real defective images (built by
+    scripts/make_demo_bundle.py on Kaggle, where MVTec AD is mounted), for
+    running the demo app without the full dataset present locally.
+
+    Same interface as MVTecDefects: len(ds), ds[i] -> (image_path, box,
+    label, key). Images are already resized to CANVAS x CANVAS and boxes
+    are already in CANVAS-space, so no further scaling is needed.
+    """
+
+    def __init__(self, root=DEMO_ROOT):
+        self.root = root
+        index_path = os.path.join(root, "index.json")
+        self.records = []
+        if not os.path.exists(index_path):
+            return
+        with open(index_path) as f:
+            entries = json.load(f)
+        for e in entries:
+            self.records.append({
+                "image_path": os.path.join(root, e["filename"]),
+                "box": tuple(e["box"]),
+                "label": e["category"] + "/" + e["defect_type"],
+                "key": "demo|" + e["category"] + "|" + e["defect_type"] + "|" + e["filename"],
+                "category": e["category"],
+            })
+
+    def __len__(self):
+        return len(self.records)
+
+    def __getitem__(self, i):
+        r = self.records[i]
+        return r["image_path"], r["box"], r["label"], r["key"]
+
+    def categories(self):
+        from collections import Counter
+        return Counter(r["category"] for r in self.records)
+
+
+def load_canvases(split="test"):
+    """The full test split if MVTec AD is present locally, else the
+    committed demo bundle. Used by app/streamlit_app.py so it needs no
+    other change to prefer real data when available."""
+    full = MVTecDefects(split=split)
+    if len(full) > 0:
+        return full
+    return DemoSet()

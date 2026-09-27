@@ -20,7 +20,7 @@ from PIL import Image, ImageDraw
 
 from zsrl import get_device
 from zsrl.corruptions import CORRUPTIONS, make
-from zsrl.dataset import MVTecDefects
+from zsrl.dataset import load_canvases
 from zsrl.encoder import FrozenEncoder
 from zsrl.env import ACTION_NAMES, N_ACTIONS, ZoomSearchEnv, node_box
 from scripts.train import build_agent
@@ -46,7 +46,7 @@ def discover_checkpoints():
 def load():
     device = get_device()
     encoder = FrozenEncoder(device)
-    canvases = MVTecDefects(split="test")
+    canvases = load_canvases(split="test")  # full test split if present, else data/demo/
     dim = ZoomSearchEnv(canvases, encoder).state_dim
     checkpoints = discover_checkpoints()
     agents = {}
