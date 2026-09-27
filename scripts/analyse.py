@@ -197,6 +197,59 @@ def figure_steps_to_commit(agents):
     print(f"wrote {RESULTS}/steps_to_commit.png")
 
 
+def figure_lambda_sweep():
+    """Figure 2: mean cost vs recall, one point per lambda. Plotted
+    alongside the seed-to-seed spread already measured at lambda=0.1 (five
+    seeds, same everything else) as an honest reference for how much of
+    any lambda-to-lambda difference could just be noise -- each lambda
+    point here is a single seed, so on its own it cannot separate a real
+    lambda effect from ordinary seed variance."""
+    path = os.path.join(RESULTS, "lambda_sweep_dqn.csv")
+    if not os.path.exists(path):
+        print("no lambda sweep data, skipping")
+        return
+    df = pd.read_csv(path).sort_values("lam")
+
+    lam01 = None
+    eval01 = load_eval("dqn")
+    if eval01 is not None:
+        b12 = eval01[(eval01.method == "dqn") & (eval01.budget == 12)]
+        if len(b12):
+            lam01 = b12.recall
+
+    fig, ax = plt.subplots(figsize=(7, 6))
+    ax.plot(df.cost, df.recall, marker="o", ms=9, c="C0", zorder=3)
+    for _, r in df.iterrows():
+        ax.annotate(f"lam={r.lam}", (r.cost, r.recall),
+                    textcoords="offset points", xytext=(8, 6), fontsize=9)
+
+    if lam01 is not None and len(lam01) > 1:
+        # the 5-seed spread at lam=0.1, budget=12, as a reference band for
+        # how much scatter comes from seed noise alone at ONE lambda value
+        ax.errorbar([df[df.lam == 0.1].cost.iloc[0]], [lam01.mean()],
+                    yerr=[lam01.std()], fmt="none", ecolor="grey", capsize=5,
+                    label=f"lam=0.1, 5-seed sd={lam01.std():.3f} (n=1 per point above)")
+        ax.legend(fontsize=8)
+
+    ax.set_xlabel("mean evaluations used (cost)")
+    ax.set_ylabel("recall")
+    ax.set_title("Lambda sweep (n=1 seed per point -- see caption)")
+    plt.tight_layout()
+    plt.savefig(os.path.join(RESULTS, "lambda_sweep.png"), dpi=140)
+    plt.close(fig)
+    print(f"wrote {RESULTS}/lambda_sweep.png")
+
+    is_monotone_cost = list(df.cost) == sorted(df.cost, reverse=True)
+    is_monotone_recall = (list(df.recall) == sorted(df.recall) or
+                           list(df.recall) == sorted(df.recall, reverse=True))
+    print(f"monotone in cost (decreasing as lambda rises): {is_monotone_cost}")
+    print(f"monotone in recall: {is_monotone_recall}")
+    if lam01 is not None:
+        print(f"5-seed sd at lam=0.1 alone: {lam01.std():.3f} "
+              f"(range of the single-seed lambda points: "
+              f"{df.recall.max() - df.recall.min():.3f})")
+
+
 def main():
     agents = discover_agents()
     print("agents with eval results:", agents or "(none)")
@@ -213,6 +266,7 @@ def main():
     figure_recall_vs_compute(agents)
     figure_degradation(agents)
     figure_steps_to_commit(agents)
+    figure_lambda_sweep()
 
 
 if __name__ == "__main__":
