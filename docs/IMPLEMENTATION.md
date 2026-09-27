@@ -1466,6 +1466,23 @@ Per agent per seed: six budget rows, four baseline rows, twelve corruption rows.
 
 Run time is small. The policies are frozen, episodes are six steps, and the encoder caches. Under an hour, and it runs on the M1.
 
+**What the actual `scripts/evaluate.py` differs on.** Every row gets a
+`per_level_accuracy` column (`recall ** (1/3)`) alongside `recall` -- once
+the environment was frozen, per-level accuracy against a 0.25 chance line
+became the real comparison (see `results/baseline_notes.md`), since recall
+cubes a smaller per-level gap and makes methods with different costs look
+farther apart than they are. `normal_model_descent` is included as a fifth
+baseline alongside oracle/random/saliency/exhaustive, using the cached
+reference from `scripts/build_normal_reference.py` -- but that reference is
+built with whatever `FrozenEncoder` was current when it ran, so it silently
+goes stale if the encoder changes (as it did: global-average-pool 512-dim to
+2x2-spatial-pool 2048-dim, see `results/spatial_pooling_notes.md`).
+`evaluate.py` checks the cached reference's dimensionality against the
+current encoder's and skips `normal_model_descent` with a clear message
+rather than crashing on a shape mismatch or silently comparing against a
+reference built with different features. Rebuild it with
+`python -m scripts.build_normal_reference` before relying on that row.
+
 ## Step 9. Figures and tables
 
 Five outputs. Four figures and one table, and they carry Part II entirely.
