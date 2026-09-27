@@ -28,8 +28,8 @@ class A2CAgent(Agent):
     name = "a2c"
 
     def __init__(self, state_dim, n_actions, device,
-                 lr=7e-4, gamma=0.95, batch_size=32,
-                 value_coef=0.5, entropy_coef=0.01, grad_clip=0.5, seed=0):
+                 lr=3e-4, gamma=0.95, batch_size=64,
+                 value_coef=0.5, entropy_coef=0.02, grad_clip=0.5, seed=0):
         self.device, self.n_actions = device, n_actions
         self.gamma, self.batch_size = gamma, batch_size
         self.value_coef, self.entropy_coef, self.grad_clip = value_coef, entropy_coef, grad_clip
