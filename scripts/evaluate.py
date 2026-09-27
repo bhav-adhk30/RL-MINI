@@ -86,7 +86,7 @@ def main():
                   f"with `python -m scripts.build_normal_reference` first.")
 
     rng = np.random.default_rng(0)
-    base = {"oracle": [], "random": [], "saliency": [], "exhaustive": []}
+    base = {"oracle": [], "random": [], "odd_one_out": [], "exhaustive": []}
     if reference is not None:
         base["normal_model"] = []
     for i in range(args.n):
@@ -96,7 +96,7 @@ def main():
         img = Image.open(path).convert("RGB").resize((CANVAS, CANVAS))
         base["oracle"].append(oracle(box))
         base["random"].append(random_descent(box, rng))
-        base["saliency"].append(saliency_descent(img, box))
+        base["odd_one_out"].append(saliency_descent(img, box))  # saliency_descent scores by odd-one-out, see zsrl/baselines.py
         base["exhaustive"].append(exhaustive(box))
         if reference is not None:
             cat = label.split("/")[0]
