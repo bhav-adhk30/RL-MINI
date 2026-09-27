@@ -46,7 +46,14 @@ class FrozenEncoder:
         n = self.net
         x = n.conv1(x); x = n.bn1(x); x = n.relu(x); x = n.maxpool(x)
         x = n.layer1(x); x = n.layer2(x); x = n.layer3(x); x = n.layer4(x)
-        x = F.adaptive_avg_pool2d(x, (2, 2))       # (B, 512, 2, 2)
+        if x.device.type == "mps":
+            # PyTorch's MPS backend doesn't support adaptive_avg_pool2d
+            # with a non-divisible input/output ratio (7 -> 2 here); CPU
+            # does, and the tensor is tiny at this point, so do this one
+            # op on CPU and move back. CUDA (Kaggle) is unaffected.
+            x = F.adaptive_avg_pool2d(x.cpu(), (2, 2)).to(x.device)
+        else:
+            x = F.adaptive_avg_pool2d(x, (2, 2))       # (B, 512, 2, 2)
         return x.permute(0, 2, 3, 1).reshape(x.shape[0], -1)  # (B, 2048)
 
     def encode_node(self, pil_image, image_key, node):
