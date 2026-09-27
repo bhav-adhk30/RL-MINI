@@ -39,8 +39,22 @@ None of this affects `results/dqn_step8_summary.md` or
 `results/design_decisions.md`, which were written from the same console
 output directly and don't depend on the reconstructed CSVs.
 
-**If/when a real checkpoint is retrieved** (see the pending seed-2 re-run
-with Save Version enabled), re-running `scripts/train.py` end to end will
-produce the genuine full-resolution files at the same paths, and
-`scripts/analyse.py` needs no changes to pick them up -- it just reads
-whatever's in `runs/<agent>/seed*_lam*/train_log.csv`.
+**Update: a real checkpoint was recovered.** The Kaggle session for seeds
+0-4 turned out to still be alive with all five runs' output sitting in
+`/kaggle/working` (they'd been run sequentially in one notebook rather than
+five separate ones). A zip-and-download workaround (`IPython.display.FileLink`
+didn't work via Kaggle's proxy; downloading the individual file through the
+Output panel's file-preview view did) recovered `seed2_lam0.1/best.pt` --
+seed 2 being the best-performing of the five (test recall 0.330, per-level
+accuracy 0.691). It's committed at `runs/dqn/seed2_lam0.1/best.pt`
+(force-added past the `runs/` gitignore rule, since the demo needs at least
+one real checkpoint). The full per-episode `train_log.csv` files were not
+part of that recovery, though -- only the checkpoints, eval CSVs (already
+had those) and `normal_reference.npz` were in the zip -- so the
+learning-curve/steps-to-commit figures above are still built from the
+reconstructed, coarser data described below.
+
+If a genuine full-resolution `train_log.csv` is retrieved later, or a
+future training run completes with `Save Version` used correctly (the
+`output_root()` fix should make plain re-runs safer regardless), it drops
+into the same path and `scripts/analyse.py` needs no changes to pick it up.
