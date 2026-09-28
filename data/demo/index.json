@@ -1,47 +1,15 @@
 [
   {
-    "filename": "screw_thread_side_003.jpg",
+    "filename": "leather_fold_006.jpg",
     "box": [
-      331.0,
-      530.0,
-      696.0,
-      652.0
-    ],
-    "category": "screw",
-    "defect_type": "thread_side"
-  },
-  {
-    "filename": "leather_glue_003.jpg",
-    "box": [
-      601.0,
-      167.0,
-      814.0,
-      379.0
+      699.0,
+      428.0,
+      788.0,
+      756.0
     ],
     "category": "leather",
-    "defect_type": "glue"
-  },
-  {
-    "filename": "pill_faulty_imprint_017.jpg",
-    "box": [
-      533.76,
-      378.88,
-      696.32,
-      687.36
-    ],
-    "category": "pill",
-    "defect_type": "faulty_imprint"
-  },
-  {
-    "filename": "capsule_scratch_015.jpg",
-    "box": [
-      411.648,
-      367.616,
-      662.528,
-      453.632
-    ],
-    "category": "capsule",
-    "defect_type": "scratch"
+    "defect_type": "fold",
+    "succeeds": true
   },
   {
     "filename": "carpet_hole_008.jpg",
@@ -52,7 +20,80 @@
       780.0
     ],
     "category": "carpet",
-    "defect_type": "hole"
+    "defect_type": "hole",
+    "succeeds": true
+  },
+  {
+    "filename": "capsule_scratch_015.jpg",
+    "box": [
+      411.648,
+      367.616,
+      662.528,
+      453.632
+    ],
+    "category": "capsule",
+    "defect_type": "scratch",
+    "succeeds": true
+  },
+  {
+    "filename": "hazelnut_hole_005.jpg",
+    "box": [
+      358.0,
+      472.0,
+      480.0,
+      607.0
+    ],
+    "category": "hazelnut",
+    "defect_type": "hole",
+    "succeeds": true
+  },
+  {
+    "filename": "screw_thread_top_018.jpg",
+    "box": [
+      524.0,
+      510.0,
+      633.0,
+      618.0
+    ],
+    "category": "screw",
+    "defect_type": "thread_top",
+    "succeeds": true
+  },
+  {
+    "filename": "zipper_split_teeth_013.jpg",
+    "box": [
+      420.0,
+      51.0,
+      594.0,
+      268.0
+    ],
+    "category": "zipper",
+    "defect_type": "split_teeth",
+    "succeeds": true
+  },
+  {
+    "filename": "screw_thread_side_003.jpg",
+    "box": [
+      331.0,
+      530.0,
+      696.0,
+      652.0
+    ],
+    "category": "screw",
+    "defect_type": "thread_side",
+    "succeeds": false
+  },
+  {
+    "filename": "pill_faulty_imprint_017.jpg",
+    "box": [
+      533.76,
+      378.88,
+      696.32,
+      687.36
+    ],
+    "category": "pill",
+    "defect_type": "faulty_imprint",
+    "succeeds": false
   },
   {
     "filename": "zipper_rough_013.jpg",
@@ -63,105 +104,19 @@
       849.0
     ],
     "category": "zipper",
-    "defect_type": "rough"
+    "defect_type": "rough",
+    "succeeds": false
   },
   {
-    "filename": "metal_nut_color_019.jpg",
+    "filename": "capsule_scratch_010.jpg",
     "box": [
-      757.76,
-      225.28,
-      857.2342857142858,
-      599.7714285714286
+      590.848,
+      503.808,
+      733.184,
+      634.88
     ],
-    "category": "metal_nut",
-    "defect_type": "color"
-  },
-  {
-    "filename": "hazelnut_hole_017.jpg",
-    "box": [
-      288.0,
-      312.0,
-      509.0,
-      543.0
-    ],
-    "category": "hazelnut",
-    "defect_type": "hole"
-  },
-  {
-    "filename": "transistor_bent_lead_005.jpg",
-    "box": [
-      101.0,
-      731.0,
-      331.0,
-      916.0
-    ],
-    "category": "transistor",
-    "defect_type": "bent_lead"
-  },
-  {
-    "filename": "cable_cut_outer_insulation_006.jpg",
-    "box": [
-      122.0,
-      281.0,
-      402.0,
-      439.0
-    ],
-    "category": "cable",
-    "defect_type": "cut_outer_insulation"
-  },
-  {
-    "filename": "bottle_contamination_003.jpg",
-    "box": [
-      659.9111111111112,
-      475.5911111111111,
-      839.68,
-      758.8977777777778
-    ],
-    "category": "bottle",
-    "defect_type": "contamination"
-  },
-  {
-    "filename": "tile_gray_stroke_013.jpg",
-    "box": [
-      380.34285714285716,
-      0.0,
-      696.0761904761905,
-      158.47619047619048
-    ],
-    "category": "tile",
-    "defect_type": "gray_stroke"
-  },
-  {
-    "filename": "grid_glue_007.jpg",
-    "box": [
-      243.0,
-      608.0,
-      334.0,
-      702.0
-    ],
-    "category": "grid",
-    "defect_type": "glue"
-  },
-  {
-    "filename": "toothbrush_defective_013.jpg",
-    "box": [
-      441.0,
-      692.0,
-      605.0,
-      875.0
-    ],
-    "category": "toothbrush",
-    "defect_type": "defective"
-  },
-  {
-    "filename": "screw_scratch_neck_005.jpg",
-    "box": [
-      550.0,
-      551.0,
-      721.0,
-      687.0
-    ],
-    "category": "screw",
-    "defect_type": "scratch_neck"
+    "category": "capsule",
+    "defect_type": "scratch",
+    "succeeds": false
   }
 ]
