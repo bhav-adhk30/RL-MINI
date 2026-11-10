@@ -83,7 +83,7 @@ def main():
     log_path = os.path.join(out, "train_log.csv")
     f = open(log_path, "w", newline="")
     w = csv.writer(f)
-    w.writerow(["episode", "return", "success", "steps", "final_depth",
+    w.writerow(["episode", "return", "success", "steps", "units", "final_depth",
                 "committed", "explore", "loss", "wall"])
 
     start, best = time.time(), -1.0
