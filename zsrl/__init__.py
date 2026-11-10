@@ -4,7 +4,7 @@ import torch
 
 CANVAS = 1024          # canvas side in pixels
 MAX_DEPTH = 4          # deepest level, region is 64px
-MIN_COMMIT_DEPTH = 1   # v2: the policy chooses its own commit depth
+MIN_COMMIT_DEPTH = 3   # forced descent depth: this is what makes deep exploration happen at all
 
 
 def get_device():
