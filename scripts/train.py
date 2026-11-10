@@ -31,7 +31,12 @@ def explore_value(agent):
 
 
 def evaluate(env, agent, n=100):
-    wins, costs = [], []
+    """Returns (recall, mean 224-equivalent units, mean commit depth).
+
+    Cost is reported in units, not actions: the root is encoded at 448 and
+    costs 4, deeper nodes cost 1 (zsrl/env.py:units). Reporting raw action
+    counts would hide that the first look is four times more expensive."""
+    wins, costs, depths = [], [], []
     for i in range(n):
         s = env.reset(index=i % len(env.canvases))
         while True:
@@ -40,8 +45,9 @@ def evaluate(env, agent, n=100):
             if done:
                 break
         wins.append(info["success"])
-        costs.append(info["steps"])
-    return float(np.mean(wins)), float(np.mean(costs))
+        costs.append(info["units"])
+        depths.append(info["depth"])
+    return (float(np.mean(wins)), float(np.mean(costs)), float(np.mean(depths)))
 
 
 def main():
@@ -50,6 +56,10 @@ def main():
     p.add_argument("--episodes", type=int, default=12000)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--lam", type=float, default=0.1)
+    p.add_argument("--base", type=float, default=2.0,
+                    help="commit reward = base**(depth-1); selects where on the\nprecision/recall curve the policy settles. Sweep 1.5 / 2.0 / 3.0.")
+    p.add_argument("--budget", type=int, default=8,
+                    help="224-equivalent compute units per image (root costs 4)")
     p.add_argument("--eval-every", type=int, default=500)
     p.add_argument("--skip-step8", action="store_true",
                     help="skip the in-process Step 8 sweep after training")
@@ -63,9 +73,11 @@ def main():
     device = get_device()
     encoder = FrozenEncoder(device)
     train_env = ZoomSearchEnv(MVTecDefects(split="train"), encoder,
-                              lam=args.lam, seed=args.seed, augment=True)
+                              budget=args.budget, lam=args.lam, base=args.base,
+                              seed=args.seed, augment=True)
     eval_env = ZoomSearchEnv(MVTecDefects(split="test"), encoder,
-                             lam=args.lam, seed=1234)  # augment=False: never at eval
+                             budget=args.budget, lam=args.lam, base=args.base,
+                             seed=1234)  # augment=False: never at eval
     agent = build_agent(args.agent, train_env.state_dim, device, args.seed)
 
     log_path = os.path.join(out, "train_log.csv")
@@ -93,7 +105,7 @@ def main():
                 break
 
         w.writerow([ep, total, int(info["success"]), info["steps"],
-                    info["depth"], int(info["committed"]),
+                    info["units"], info["depth"], int(info["committed"]),
                     explore_value(agent),
                     float(np.mean(losses)) if losses else "",
                     round(time.time() - start, 1)])
@@ -102,13 +114,14 @@ def main():
         window.append((total, info["committed"], info["depth"]))
 
         if ep > 0 and ep % args.eval_every == 0:
-            rec, cost = evaluate(eval_env, agent, n=100)
+            rec, cost, dep = evaluate(eval_env, agent, n=100)
             w_ret = np.mean([r for r, _, _ in window])
             w_committed = np.mean([c for _, c, _ in window])
             w_depth = np.mean([d for _, _, d in window])
             window = []
             print(f"ep {ep}  train_return {w_ret:.2f}  committed_rate {w_committed:.3f}  "
-                  f"mean_depth {w_depth:.2f}  |  eval_recall {rec:.3f}  eval_cost {cost:.1f}  "
+                  f"mean_depth {w_depth:.2f}  |  eval_recall {rec:.3f}  eval_units {cost:.1f}  "
+                  f"eval_commit_depth {dep:.2f}  "
                   f"explore {explore_value(agent):.3f}  "
                   f"cache {encoder.stats()['hit_rate']:.2f}")
             if rec > best:
@@ -126,21 +139,32 @@ def main():
 
     # Final weights, train-vs-test recall (the memorisation check) --
     # always run, cheap relative to training.
-    train_env_eval = ZoomSearchEnv(MVTecDefects(split="train"), encoder, lam=args.lam)
-    train_recall, train_cost = evaluate(train_env_eval, agent, n=100)
-    test_recall, test_cost = evaluate(eval_env, agent, n=100)
+    train_env_eval = ZoomSearchEnv(MVTecDefects(split="train"), encoder,
+                                   budget=args.budget, lam=args.lam, base=args.base)
+    train_recall, train_cost, _ = evaluate(train_env_eval, agent, n=100)
+    test_recall, test_cost, test_depth = evaluate(eval_env, agent, n=100)
     print(f"\nfinal weights, train-vs-test: "
           f"train recall {train_recall:.3f} cost {train_cost:.1f} "
           f"(per-level accuracy {train_recall ** (1/3):.3f})  |  "
-          f"test recall {test_recall:.3f} cost {test_cost:.1f} "
-          f"(per-level accuracy {test_recall ** (1/3):.3f})")
+          f"test recall {test_recall:.3f} units {test_cost:.1f} "
+          f"mean commit depth {test_depth:.2f}")
 
     written = [log_path, final_path, meta_path]
     if os.path.exists(os.path.join(out, "best.pt")):
         written.append(os.path.join(out, "best.pt"))
 
-    # Step 8 sweep, in-process on the current (final) in-memory agent --
-    # no save-then-reload round trip.
+    # v1 reported final weights. Across five seeds best.pt was +0.042 better
+    # and one seed lost 0.10 between its best and its final checkpoint, so
+    # report both and sweep on the best one.
+    best_path = os.path.join(out, "best.pt")
+    if os.path.exists(best_path):
+        agent.load(best_path)
+        b_rec, b_cost, b_depth = evaluate(eval_env, agent, n=100)
+        print(f"best.pt:  test recall {b_rec:.3f} units {b_cost:.1f} "
+              f"mean commit depth {b_depth:.2f}   "
+              f"(final weights were {test_recall:.3f})")
+
+    # Step 8 sweep, in-process on the agent now holding the BEST weights.
     if not args.skip_step8:
         from scripts.evaluate import run_full_evaluation
         print("\n--- Step 8 evaluation (in-process, final weights) ---")

@@ -22,20 +22,29 @@ class FrozenEncoder:
         self.net = net.eval().to(device)
         self.device = device
 
-        self.tf = T.Compose([
-            T.Resize((224, 224)),
-            T.ToTensor(),
-            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-        ])
+        # v2: input resolution depends on the node's depth. At depth 0 a 60px
+        # defect occupies 13px of a 224 input and 26px of a 448 one; the linear
+        # probe at depth 0 goes 0.522 -> 0.701 with that change, while depths 1
+        # and 2 gain only +0.030 and +0.052 -- not worth 4x the FLOPs. See
+        # results/FINAL_RESULTS.md and docs/REBUILD_V2.md.
+        def _tf(side):
+            return T.Compose([
+                T.Resize((side, side)),
+                T.ToTensor(),
+                T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            ])
+        self.tf = _tf(224)          # kept: anything calling encode_pil directly
+        self._tf = {224: _tf(224), 448: _tf(448)}
 
         self.cache = {}
         self.cache_size = cache_size
-        self.calls = 0        # every real forward pass, the compute counter
+        self.calls = 0        # every real forward pass
+        self.units = 0        # 224-equivalent compute, the reported metric
         self.hits = 0
 
     @torch.no_grad()
-    def encode_pil(self, pil_image):
-        x = self.tf(pil_image).unsqueeze(0).to(self.device)
+    def encode_pil(self, pil_image, side=224):
+        x = self._tf[side](pil_image).unsqueeze(0).to(self.device)
         feat = self._spatial_features(x)
         return feat.squeeze(0).float().cpu().numpy()
 
@@ -65,18 +74,24 @@ class FrozenEncoder:
             return cached
 
         self.calls += 1
-        from zsrl.env import node_box
+        from zsrl.env import node_box, units
+        # A 448 pass is 4x the FLOPs of a 224 one. `units` is what every cost
+        # in this project is reported in, so that raising the resolution cannot
+        # silently make each "pass" four times more expensive.
+        self.units += units(node[0])
+        side = 448 if node[0] == 0 else 224
         x1, y1, x2, y2 = node_box(node)
-        feat = self.encode_pil(pil_image.crop((x1, y1, x2, y2)))
+        feat = self.encode_pil(pil_image.crop((x1, y1, x2, y2)), side=side)
         if len(self.cache) < self.cache_size:
             self.cache[key] = feat
         return feat
 
     def reset_counter(self):
         self.calls = 0
+        self.units = 0
 
     def stats(self):
         total = self.calls + self.hits
-        return {"calls": self.calls, "hits": self.hits,
+        return {"calls": self.calls, "units": self.units, "hits": self.hits,
                 "hit_rate": self.hits / total if total else 0.0,
                 "entries": len(self.cache)}
