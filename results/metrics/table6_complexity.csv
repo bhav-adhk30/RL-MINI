@@ -1,0 +1,13 @@
+metric,value,unit,source
+Q-network parameters,1199366.0,params,derived from QNetwork(2082->512->256->6)
+Online + target parameters,2398732.0,params,Double DQN keeps two copies
+Model size on disk,4800241.0,bytes,runs/dqn/seed2_lam0.1/best.pt
+Frozen encoder parameters,11689512.0,params,"ResNet-18, not trained"
+Replay buffer capacity,100000.0,transitions,DQNAgent default
+Replay buffer memory,1668800000.0,bytes,"2x state + a,r,d + next-mask, float32"
+Training episodes per seed,12000.0,episodes,train.py --episodes default
+Environment steps per seed,101541.0,steps,"mean episode length x 12000, filled below"
+Gradient updates per seed,50270.0,updates,"env steps / train_every(=2), after learn_start=1000"
+Transitions processed per seed,3217308.0,transitions,gradient updates x batch_size(=64)
+Wall-clock training time,,minutes,NOT_AVAILABLE - the wall column in train_log.csv is empty
+Inference latency,,ms/action,NOT_AVAILABLE - measure with scripts/record_rollouts.py

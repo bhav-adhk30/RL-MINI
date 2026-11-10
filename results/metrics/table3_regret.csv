@@ -1,0 +1,4 @@
+method,budget,oracle_success_rate,policy_success_rate,per_episode_task_regret,cumulative_task_regret_200ep,oracle_cost,policy_cost,excess_cost_per_episode
+dqn,12,1.0,0.245,0.755,151.0,3,7.998,4.998
+ppo,12,1.0,0.196,0.804,160.8,3,4.008,1.008
+a2c,12,1.0,0.0683,0.9317,186.3333,3,4.0,1.0

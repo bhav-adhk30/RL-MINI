@@ -1,0 +1,37 @@
+{
+  "evaluation_episodes_per_point": 200,
+  "budget": 12,
+  "oracle_return": 5.7,
+  "quadtree_nodes_depth_0_to_4": 341,
+  "headline": {
+    "dqn": {
+      "success_rate": 0.245,
+      "std": 0.0548,
+      "ci95_halfwidth": 0.068,
+      "mean_episode_length": 7.998,
+      "seeds": 5
+    },
+    "ppo": {
+      "success_rate": 0.196,
+      "std": 0.0108,
+      "ci95_halfwidth": 0.0135,
+      "mean_episode_length": 4.008,
+      "seeds": 5
+    },
+    "a2c": {
+      "success_rate": 0.0683,
+      "std": 0.0202,
+      "ci95_halfwidth": 0.0502,
+      "mean_episode_length": 4.0,
+      "seeds": 3
+    }
+  },
+  "not_available_here": [
+    "mean absolute TD error (notes 4.3) - needs rollouts, see record_rollouts.py",
+    "Bellman residual (notes 4.4) - same",
+    "state-space coverage (notes 6.2) - same",
+    "state visitation entropy (notes 6.3) - same",
+    "wall-clock training time (notes 7) - wall column in train_log.csv is empty",
+    "inference latency (notes 7) - needs a timed rollout"
+  ]
+}

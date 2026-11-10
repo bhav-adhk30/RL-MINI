@@ -1,0 +1,6 @@
+agent,seed,episodes_logged,initial_return,final_return,initial_success,final_success,best_success,converged_at_episode,final_episode_length,final_commit_rate
+dqn,0,11500,-5.8,0.04,0.02,0.22,0.22,5000,7.8,0.748
+dqn,1,11500,-6.34,0.26,0.0,0.21,0.23,7000,7.4,0.802
+dqn,2,11500,-6.14,0.59,0.02,0.26,0.31,6500,7.7,0.818
+dqn,3,11500,-6.41,0.12,0.0,0.14,0.24,6000,7.5,0.818
+dqn,4,11500,-6.2,0.22,0.01,0.23,0.27,6000,8.0,0.818
