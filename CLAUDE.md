@@ -16,6 +16,23 @@ It contains the environment design, the reward function, reference implementatio
 expected numbers at each checkpoint, and the troubleshooting table. Follow it rather
 than inventing an alternative design.
 
+## Environment v2 (current work)
+
+**Read `docs/REBUILD_V2.md` before touching `zsrl/env.py` or `zsrl/encoder.py`.**
+It specifies five changes, each justified by a measurement in
+`results/FINAL_RESULTS.md`: UP removed, COMMIT legal from depth 1, commit
+reward scaling with depth, 448 encoder input at depth 0 only, and compute
+reported in 224-equivalent units.
+
+v1 is frozen at tag `env-frozen-v1` and its results stay as published. Tag
+`env-frozen-v2` before anyone trains against the new environment.
+
+Two v1 facts that were wrong in the write-up and must not be repeated:
+- `train_every` is **2**, not 4. `build_agent` passes only the seed, so
+  `DQNAgent`'s default applies.
+- Reported numbers came from **final** weights, not `best.pt`. Evaluate
+  `best.pt`.
+
 ## Your scope
 
 Build these, in this order:
