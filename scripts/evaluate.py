@@ -31,7 +31,7 @@ def run_agent(agent, canvases, encoder, budget, corruption, tag, n):
             if done:
                 break
         wins.append(info["success"])
-        costs.append(info["steps"])
+        costs.append(info["units"])   # v2: 224-equivalent compute
         depths.append(info["depth"])
     recall = float(np.mean(wins))
     return {"recall": recall, "cost": float(np.mean(costs)),

@@ -4,8 +4,12 @@ from PIL import Image
 from zsrl import MAX_DEPTH, MIN_COMMIT_DEPTH
 from zsrl.env import child, contains_centre, node_box
 
+# Fixed descent depth for all baselines. Must NOT track
+# MIN_COMMIT_DEPTH, or the baselines silently change with it.
+BASELINE_DEPTH = 3
 
-def oracle(target, depth=MIN_COMMIT_DEPTH):
+
+def oracle(target, depth=BASELINE_DEPTH):
     """Always descends correctly. Cost = depth. This is the ceiling."""
     node = (0, 0, 0)
     for _ in range(depth):
@@ -17,7 +21,7 @@ def oracle(target, depth=MIN_COMMIT_DEPTH):
     return {"success": True, "cost": depth, "node": node}
 
 
-def random_descent(target, rng, budget=12, depth=MIN_COMMIT_DEPTH):
+def random_descent(target, rng, budget=12, depth=BASELINE_DEPTH):
     """Random quadrant each step. The floor."""
     node, cost = (0, 0, 0), 0
     while node[0] < depth and cost < budget:
@@ -51,7 +55,7 @@ def odd_one_out_scores(image, node):
     return scores
 
 
-def saliency_descent(image, target, budget=12, depth=MIN_COMMIT_DEPTH):
+def saliency_descent(image, target, budget=12, depth=BASELINE_DEPTH):
     """Descend into the child that looks most unlike its three siblings
     (see odd_one_out_scores). A sensible engineer's solution, and a
     genuinely tough opponent -- though on MVTec a meaningfully weaker one
@@ -67,7 +71,7 @@ def saliency_descent(image, target, budget=12, depth=MIN_COMMIT_DEPTH):
 
 
 def normal_model_descent(image, target, reference, encode_fn,
-                          budget=12, depth=MIN_COMMIT_DEPTH):
+                          budget=12, depth=BASELINE_DEPTH):
     """Descend by distance from a per-category 'normal' reference.
 
     `reference` is a (4, encoder.dim) array of mean frozen-encoder features
@@ -96,6 +100,6 @@ def normal_model_descent(image, target, reference, encode_fn,
             "cost": cost, "node": node}
 
 
-def exhaustive(target, depth=MIN_COMMIT_DEPTH):
+def exhaustive(target, depth=BASELINE_DEPTH):
     """Visit every node at the target depth. Always succeeds, always expensive."""
     return {"success": True, "cost": 4 ** depth, "node": None}
